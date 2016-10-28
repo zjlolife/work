@@ -5,6 +5,7 @@ target/
 #fixed file
 *.pyc
 *.lst~
+*.*~
 .class
 .exe
 .log
