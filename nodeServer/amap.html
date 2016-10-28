@@ -1,0 +1,88 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>获取地区轮廓线</title>
+<script type="text/javascript" src="http://webapi.amap.com/maps?v=1.3&key=fd37881b4dd5246eb371571968d7a345"></script>
+</script>
+<style type="text/css">
+#container {width:1024px; height: 798px; }
+</style>
+</head>
+<body>
+<div id="container"></div>
+<br />
+输入省、直辖市或县名称1：<input type="text" id="districtName1" style="width:80px" value="重庆市">
+<input type="button" onclick="click1()" value="获取轮廓线"/>
+输入省、直辖市或县名称2：<input type="text" id="districtName2" style="width:80px" value="重庆市">
+<input type="button" onclick="click2('#000079')" value="获取轮廓线"/>
+坐标展示：<input type="text" id="point" style="width:80px" value=""/>
+<input type="button" onclick="click3()" value="显示坐标位置"/>
+<input type="button" onclick="clear1()" value="清除"/>
+
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.7.2.min.js"></script>
+<script type="text/javascript">
+var map = new AMap.Map('container',{
+        zoom: 10,
+        center: [116.39,39.9]
+});
+
+function  click1() {
+    var district = $('#districtName1').val();
+    $.ajax({
+       url : 'http://restapi.amap.com/v3/config/district?keywords=' + district + '&extensions=all&key=fd37881b4dd5246eb371571968d7a345',
+       type : 'get',
+       dataType : 'json',
+       success : function (res) {
+           if (res.status == '1') {
+              console.log(res.districts);
+              if (!res.districts || res.districts.length == 0) {
+                 alert("无数据");
+              }
+              else if (res.districts && res.districts.length == 1) {
+                   var polyline = res.districts[0].polyline;
+                   var center = res.districts[0].center.split(',');
+                   var polygons = polyline.split('|');
+                   $.each(polygons, function (index, boundary) {
+                      getBoundary(boundary);
+                   });
+                    map.setCenter(new AMap.LngLat(center[0], center[1]));
+              }
+              else {
+                   alert('多个district');
+              }
+           }
+       }
+    });
+}
+
+function click3() {
+    var point = $('#point').val().split(',');
+    var marker = new AMap.Marker({
+        position : [point[0], point[1]],
+        map : map
+    })
+}
+//添加多边形覆盖物
+function getBoundary(boundary){
+   var polygonArr=new Array();//多边形覆盖物节点坐标数组
+   var lngLats = boundary.split(';');
+   $.each(lngLats, function(index, item) {
+      var lngLat = item.split(',');
+      var lng = lngLat[0];
+      var lat = lngLat[1];
+      polygonArr.push(new AMap.LngLat(lng, lat));
+   });
+   var polygon=new AMap.Polygon({
+   path:polygonArr,//设置多边形边界路径
+   strokeColor:"#FF3030", //线颜色
+   strokeOpacity:0.2, //线透明度
+   strokeWeight:3,    //线宽
+   fillOpacity: 0.35,//填充透明度
+   zIndex : 20000
+  });
+   polygon.setMap(map);
+ }
+</script>
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>高德多边形边界展示在百度地图上（高德坐标转为百度坐标系）</title>
+<script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=yyH2Nl2CUMIk7kxb66LTUjhk2w8gPW3n">
+</script>
+<style type="text/css">
+body{font-size:13px;margin:10px}
+#container{width:800px;height:500px;border:1px solid gray}
+</style>
+</head>
+<body>
+<div id="container"></div>
+<br />
+区县名称1：<input type="text" id="districtName1" style="width:80px" value="">
+<input type="button" onclick="click1()" value="获取轮廓线"/>
+区县名称2：<input type="text" id="districtName2" style="width:80px" value="">
+<input type="button" onclick="click2('#000079')" value="获取轮廓线"/>
+坐标展示：<input type="text" id="point" style="width:80px" value=""/>
+<input type="button" onclick="click3()" value="显示坐标位置"/>
+<input type="button" onclick="clear1()" value="清除"/>
+
+<script type="text/javascript" src="http://lib.sinaapp.com/js/jquery/1.9.1/jquery-1.9.1.min.js"></script>
+<script type="text/javascript">
+var map = new BMap.Map("container");
+map.centerAndZoom(new BMap.Point(116.403765, 39.914850), 5);
+map.addControl(new BMap.NavigationControl({type: BMAP_NAVIGATION_CONTROL_SMALL}));
+map.enableScrollWheelZoom();
+
+var options = {
+    size: BMAP_POINT_SIZE_SMALL,
+    shape: BMAP_POINT_SHAPE_STAR,
+    color: '#d340c3'
+}
+
+
+function click1() {
+    var name = document.getElementById("districtName1").value;
+    getBoundary(name);
+}
+
+function click2(color) {
+    var name = document.getElementById("districtName2").value;
+    getBoundary(name, color);
+}
+
+function click3() {
+    var value = document.getElementById("point").value;
+    var array = value.split(",");
+    var points = [];
+    var point = new BMap.Point(array[0], array[1]);
+    var mkr = new BMap.Marker(point);
+    map.addOverlay(mkr);
+
+}
+
+function clear1() {
+   map.clearOverlays();        //清除地图覆盖物
+}
+
+function getBoundary(name, color){
+    var red = '#ff0000';
+    if (color) {
+        red = color;
+    }
+    $.ajax({
+       url : '/amapToBaiduBoundary?district=' + name,
+       type : 'get',
+       dataType : 'json',
+       success : function (res) {
+            var data = res.data;
+            var boundarys = data.split('|');
+            var f = boundarys[0].split(';');
+            $.each(boundarys, function (index, boundary) {
+                var ply = new BMap.Polygon(boundary, {strokeWeight:
+                    2, strokeColor: red}); //建立多边形覆盖物
+                map.addOverlay(ply);  //添加覆盖物
+                map.setViewport(ply.getPath());    //调整视野
+            });
+       }
+    });
+}
+
+</script>
+</body>
+</html>
+
